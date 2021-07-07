@@ -51,8 +51,7 @@ fn rate_limit(){
 	assert_eq!(rs.limit, 11);
 	assert_eq!(to_second(rs.retry_after), 1);
 	assert_eq!(to_second(rs.reset_after), 11);
-	thread::sleep(std::time::Duration::from_secs(2) + 
-	std::time::Duration::from_millis(rs.retry_after.num_milliseconds() as u64));
+	thread::sleep(std::time::Duration::from_secs(3));
 	let rs = limiter.rate_limit("test".into(), 10, 1, 1, 3).unwrap();
 	assert_eq!(rs.allowed, true);
 	assert_eq!(rs.remaining, 0);
