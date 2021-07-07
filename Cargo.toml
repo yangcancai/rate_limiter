@@ -1,0 +1,16 @@
+[package]
+name = "rate_limiter"
+version = "0.1.0"
+authors = ["yangcancai <admin.com>"]
+edition = "2018"
+license-file = "Apache-2.0"
+description = "A RateLimit library come from redis-cell"
+repository = "https://github.com/yangcancai/rate_limiter/"
+homepage = "https://github.com/yangcancai/rate_limiter"
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+name = "rate_limiter"
+crate-type = ["cdylib","rlib"]
+
+[dependencies]
+time = "0.1"
