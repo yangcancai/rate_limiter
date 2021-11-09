@@ -51,6 +51,24 @@ impl Store{
 	    }
     }
 }
+impl StoreI for Store{
+    fn get(&self, key: &str) -> i64 {
+        match self.data.get(key) {
+            None => -1,
+            Some(v) => {
+                if v.1 <= time::now_utc() {
+                    -1
+                } else {
+                    v.0
+                }
+            }
+        }
+    }
+    fn set(&mut self, key: String, val: i64, ttl: Duration) {
+        let expired = time::now_utc() + ttl;
+        self.data.insert(key, (val, expired));
+    }
+}
 impl StoreI for &mut Store{
     fn get(&self, key: &str) -> i64 {
         match self.data.get(key) {
