@@ -43,6 +43,12 @@ pub struct Store {
 pub trait StoreI {
     fn get(&self, key: &str) -> i64;
     fn set(&mut self, key: String, val: i64, ttl: time::Duration);
+    fn delete(&mut self, key: String);
+}
+impl Default for Store{
+    fn default() -> Self {
+        Store::new()
+    }
 }
 impl Store{
     pub fn new() -> Self{
@@ -68,6 +74,9 @@ impl StoreI for Store{
         let expired = time::now_utc() + ttl;
         self.data.insert(key, (val, expired));
     }
+    fn delete(&mut self, key: String){
+        self.data.remove(&key);
+    }
 }
 impl StoreI for &mut Store{
     fn get(&self, key: &str) -> i64 {
@@ -85,6 +94,9 @@ impl StoreI for &mut Store{
     fn set(&mut self, key: String, val: i64, ttl: Duration) {
         let expired = time::now_utc() + ttl;
         self.data.insert(key, (val, expired));
+    }
+    fn delete(&mut self, key: String){
+        self.data.remove(&key);
     }
 }
 pub struct RateLimiter<T> {
@@ -123,7 +135,7 @@ fn nanoseconds(x: time::Tm) -> i64 {
 impl<T: StoreI> RateLimiter<T> {
     pub fn new(store: T) -> Self {
         RateLimiter {
-            store: store,
+            store,
             delay_variation_tolerance: time::Duration::seconds(0),
             emission_interval: time::Duration::seconds(0),
             limit: 0,
@@ -135,6 +147,21 @@ impl<T: StoreI> RateLimiter<T> {
             time::Duration::nanoseconds(per_period.num_nanoseconds().unwrap() * (burst + 1));
         self.emission_interval = per_period;
         self.limit = burst + 1;
+    }
+    /// Rate limit
+    /// 
+    /// # Examples
+    /// ```
+    /// use rate_limiter::rate_limiter::Store;
+    /// use rate_limiter::RateLimiter;
+    /// use rate_limiter::rate_limiter::to_second;
+    /// let store = Store::new();
+    /// let mut rate_limiter = RateLimiter::new(store);
+    /// let rs = rate_limiter.rate_limit("foo".to_string(),10,1,1,1).unwrap();
+    /// rate_limiter.delete("foo".into());
+    /// ```
+    pub fn delete(&mut self, key: String){
+        self.store.delete(key);
     }
     /// Rate limit
     ///
@@ -209,9 +236,9 @@ impl<T: StoreI> RateLimiter<T> {
         Ok(RateLimitResult {
             allowed: !limited,
             limit: self.limit,
-            remaining: remaining,
-            reset_after: reset_after,
-            retry_after: retry_after,
+            remaining,
+            reset_after,
+            retry_after,
         })
     }
 }
